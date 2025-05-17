@@ -1,0 +1,157 @@
+/* Container for the whole app: sidebar + main */
+.app-container {
+  display: flex;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 280px;
+  background-color: #202123;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.sidebar h2 {
+  margin-bottom: 24px;
+}
+
+.sidebar-item {
+  padding: 12px 20px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-item:hover {
+  background-color: #333336;
+}
+
+.sidebar-item.active {
+  background-color: #3e3f41;
+  font-weight: bold;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  padding: 40px;
+  box-sizing: border-box;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.main-content h1 {
+  margin-bottom: 20px;
+}
+
+/* Input group */
+.input-group {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.url-input {
+  padding: 12px;
+  width: 320px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.analyze-button {
+  margin-left: 15px;
+  padding: 12px 24px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.analyze-button:disabled {
+  background-color: #a0c6ff;
+  cursor: not-allowed;
+}
+
+.analyze-button:not(:disabled):hover {
+  background-color: #0056b3;
+}
+
+/* Report section */
+.report-section {
+  width: 100%;
+  max-width: 700px;
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-height: 300px;
+}
+
+.report-section h2 {
+  margin-bottom: 20px;
+}
+
+.report-content {
+  font-size: 16px;
+  white-space: pre-line;
+}
+
+.error-message {
+  color: red;
+}
+/* Optional: Status indicators or labels (for future enhancement) */
+.status-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 12px;
+  color: white;
+  background-color: #007bff;
+  margin-left: 10px;
+}
+
+.status-tag.success {
+  background-color: #28a745;
+}
+
+.status-tag.error {
+  background-color: #dc3545;
+}
+
+/* Optional: Loading spinner or message styling */
+.loading-message {
+  font-style: italic;
+  color: #555;
+  margin-top: 10px;
+}
+
+/* Optional: Section dividers for reports */
+.report-block {
+  margin-bottom: 30px;
+}
+
+.report-block h3 {
+  margin-bottom: 10px;
+  font-size: 18px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 5px;
+}
+
+/* Optional: Highlighted metric */
+.highlight-metric {
+  font-weight: bold;
+  color: #2c3e50;
+}
