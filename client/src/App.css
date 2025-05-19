@@ -47,7 +47,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+<<<<<<< HEAD
   overflow-y: auto;
+=======
+>>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
 }
 
 .main-content h1 {
@@ -110,6 +113,7 @@
   white-space: pre-line;
 }
 
+<<<<<<< HEAD
 .report-data {
   white-space: pre-wrap;
   font-family: monospace;
@@ -217,13 +221,42 @@
 }
 
 /* Loading message styling */
+=======
+.error-message {
+  color: red;
+}
+/* Optional: Status indicators or labels (for future enhancement) */
+.status-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 12px;
+  color: white;
+  background-color: #007bff;
+  margin-left: 10px;
+}
+
+.status-tag.success {
+  background-color: #28a745;
+}
+
+.status-tag.error {
+  background-color: #dc3545;
+}
+
+/* Optional: Loading spinner or message styling */
+>>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
 .loading-message {
   font-style: italic;
   color: #555;
   margin-top: 10px;
 }
 
+<<<<<<< HEAD
 /* Section dividers for reports */
+=======
+/* Optional: Section dividers for reports */
+>>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
 .report-block {
   margin-bottom: 30px;
 }
@@ -235,11 +268,16 @@
   padding-bottom: 5px;
 }
 
+<<<<<<< HEAD
 /* Highlighted metric */
+=======
+/* Optional: Highlighted metric */
+>>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
 .highlight-metric {
   font-weight: bold;
   color: #2c3e50;
 }
+<<<<<<< HEAD
 
 .tooltip {
   position: relative;
@@ -267,3 +305,5 @@
   visibility: visible;
   opacity: 1;
 }
+=======
+>>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184

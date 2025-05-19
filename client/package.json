@@ -8,8 +8,11 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "body-parser": "^2.2.0",
+<<<<<<< HEAD
     "chrome-launcher": "^0.15.2",
     "cors": "^2.8.5",
+=======
+>>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
     "express": "^5.1.0",
     "lighthouse": "^12.6.0",
     "playwright": "^1.52.0",
@@ -17,19 +20,28 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-scripts": "5.0.1",
+<<<<<<< HEAD
     "recharts": "^2.15.3",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
     "concurrently": "^7.6.0"
   },
+=======
+    "web-vitals": "^2.1.4"
+  },
+>>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+<<<<<<< HEAD
     "eject": "react-scripts eject",
     "server": "node server.js",
     "dev": "concurrently \"npm run server\" \"npm start\""
+=======
+    "eject": "react-scripts eject"
+>>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
   },
   "eslintConfig": {
     "extends": [
