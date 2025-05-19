@@ -1,0 +1,269 @@
+/* Container for the whole app: sidebar + main */
+.app-container {
+  display: flex;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 280px;
+  background-color: #202123;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.sidebar h2 {
+  margin-bottom: 24px;
+}
+
+.sidebar-item {
+  padding: 12px 20px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-item:hover {
+  background-color: #333336;
+}
+
+.sidebar-item.active {
+  background-color: #3e3f41;
+  font-weight: bold;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  padding: 40px;
+  box-sizing: border-box;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.main-content h1 {
+  margin-bottom: 20px;
+}
+
+/* Input group */
+.input-group {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.url-input {
+  padding: 12px;
+  width: 320px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.analyze-button {
+  margin-left: 15px;
+  padding: 12px 24px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.analyze-button:disabled {
+  background-color: #a0c6ff;
+  cursor: not-allowed;
+}
+
+.analyze-button:not(:disabled):hover {
+  background-color: #0056b3;
+}
+
+/* Report section */
+.report-section {
+  width: 100%;
+  max-width: 700px;
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-height: 300px;
+}
+
+.report-section h2 {
+  margin-bottom: 20px;
+}
+
+.report-content {
+  font-size: 16px;
+  white-space: pre-line;
+}
+
+.report-data {
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: auto;
+  width: 100%;
+  margin: 0;
+}
+
+.error-message {
+  color: red;
+}
+
+/* Debug section */
+.debug-section {
+  margin-top: 30px;
+  width: 100%;
+  max-width: 700px;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.debug-section summary {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.debug-section pre {
+  background-color: #f1f1f1;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+/* API table styling */
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 15px;
+  background: #f9fbfd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.modern-table caption {
+  text-align: left;
+  font-weight: bold;
+  font-size: 17px;
+  padding: 8px 0;
+  color: #2c3e50;
+  background: #f9fbfd;
+}
+
+.modern-table th, .modern-table td {
+  border: 1px solid #dbe2ea;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.modern-table th {
+  background: #eaf1fa;
+  font-weight: 600;
+}
+
+.status-icon.ok { color: #28a745; font-size: 18px; }
+.status-icon.warn { color: #ffc107; font-size: 18px; }
+.status-icon.error { color: #dc3545; font-size: 18px; }
+
+/* Method and status tags for API table */
+.method-tag {
+  padding: 2px 8px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  margin-right: 2px;
+  text-transform: uppercase;
+}
+.method-get { background: #28a745; }
+.method-post { background: #007bff; }
+.method-put { background: #ffc107; color: #222; }
+.method-delete { background: #dc3545; }
+
+.status-tag {
+  padding: 2px 8px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+}
+.status-2 { background: #28a745; }
+.status-4 { background: #ffc107; color: #222; }
+.status-5 { background: #dc3545; }
+
+.api-table caption {
+  caption-side: top;
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+/* Loading message styling */
+.loading-message {
+  font-style: italic;
+  color: #555;
+  margin-top: 10px;
+}
+
+/* Section dividers for reports */
+.report-block {
+  margin-bottom: 30px;
+}
+
+.report-block h3 {
+  margin-bottom: 10px;
+  font-size: 18px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 5px;
+}
+
+/* Highlighted metric */
+.highlight-metric {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.tooltip {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+}
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 220px;
+  background-color: #333;
+  color: #fff;
+  text-align: left;
+  border-radius: 6px;
+  padding: 8px;
+  position: absolute;
+  z-index: 1;
+  left: 110%;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 13px;
+}
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
