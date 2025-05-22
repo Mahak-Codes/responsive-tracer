@@ -15,7 +15,6 @@ async function analyzeApiCalls(url) {
       chromeFlags: ["--headless", "--disable-gpu", "--no-sandbox"],
     })
 
-    // Configure Lighthouse to capture network requests
     const options = {
       logLevel: "info",
       output: "json",
@@ -63,11 +62,14 @@ async function analyzeApiCalls(url) {
         const urlObj = new URL(call.url)
         const path = urlObj.pathname
 
+        const timeTaken = Math.round(call.endTime - call.startTime)
         return {
           endpoint: path,
           method: call.method || "GET",
           status: call.statusCode || "Unknown",
-          timeTaken: Math.round(call.endTime - call.startTime),
+          timeTaken: timeTaken,
+          avgResponseTime: timeTaken || 0, // Ensure it's never null
+          maxTaken: timeTaken || 0, // Ensure it's never null
           payloadSize: formatBytes(call.transferSize || 0),
           errors: call.statusCode >= 400 ? `Error ${call.statusCode}` : "-",
           rawData: call,
@@ -79,6 +81,8 @@ async function analyzeApiCalls(url) {
           method: call.method || "GET",
           status: call.statusCode || "Unknown",
           timeTaken: 0,
+          avgResponseTime: 0,
+          maxTaken: 0,
           payloadSize: "0B",
           errors: "Error parsing call data",
           rawData: call,
@@ -107,11 +111,7 @@ async function analyzeApiCalls(url) {
   }
 }
 
-/**
- * Analyzes API call data to identify issues and patterns
- * @param {Array} apiCalls - Formatted API call data
- * @returns {Object} - Analysis results
- */
+
 function analyzeApiCallsData(apiCalls) {
   // Identify slow APIs (taking more than 500ms)
   const slowApis = apiCalls

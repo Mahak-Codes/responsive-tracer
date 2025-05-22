@@ -47,10 +47,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-<<<<<<< HEAD
   overflow-y: auto;
-=======
->>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
 }
 
 .main-content h1 {
@@ -113,7 +110,6 @@
   white-space: pre-line;
 }
 
-<<<<<<< HEAD
 .report-data {
   white-space: pre-wrap;
   font-family: monospace;
@@ -125,31 +121,8 @@
 }
 
 .error-message {
-  color: red;
-}
-
-/* Debug section */
-.debug-section {
-  margin-top: 30px;
-  width: 100%;
-  max-width: 700px;
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
-}
-
-.debug-section summary {
-  cursor: pointer;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.debug-section pre {
-  background-color: #f1f1f1;
-  padding: 10px;
-  border-radius: 4px;
-  overflow-x: auto;
+  color: #dc3545;
+  font-weight: 500;
 }
 
 /* API table styling */
@@ -158,152 +131,338 @@
   border-collapse: collapse;
   margin: 16px 0;
   font-size: 15px;
-  background: #f9fbfd;
+  background: #fff;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .modern-table caption {
   text-align: left;
   font-weight: bold;
   font-size: 17px;
-  padding: 8px 0;
+  padding: 12px 16px;
   color: #2c3e50;
-  background: #f9fbfd;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
 }
 
-.modern-table th, .modern-table td {
-  border: 1px solid #dbe2ea;
-  padding: 10px 14px;
+.modern-table th,
+.modern-table td {
+  padding: 12px 16px;
   text-align: left;
+  border-bottom: 1px solid #e9ecef;
 }
 
 .modern-table th {
-  background: #eaf1fa;
+  background: #f8f9fa;
   font-weight: 600;
+  color: #495057;
 }
 
-.status-icon.ok { color: #28a745; font-size: 18px; }
-.status-icon.warn { color: #ffc107; font-size: 18px; }
-.status-icon.error { color: #dc3545; font-size: 18px; }
+.modern-table tr:last-child td {
+  border-bottom: none;
+}
 
-/* Method and status tags for API table */
-.method-tag {
-  padding: 2px 8px;
-  border-radius: 8px;
-  color: #fff;
+.modern-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Status indicators */
+.status-icon {
+  font-size: 18px;
+  margin-right: 4px;
+}
+
+.status-icon.ok {
+  color: #28a745;
+}
+.status-icon.warn {
+  color: #ffc107;
+}
+.status-icon.error {
+  color: #dc3545;
+}
+
+/* Method and status tags */
+.method-tag,
+.status-tag {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
   font-size: 12px;
-  font-weight: bold;
-  margin-right: 2px;
+  font-weight: 600;
   text-transform: uppercase;
 }
-.method-get { background: #28a745; }
-.method-post { background: #007bff; }
-.method-put { background: #ffc107; color: #222; }
-.method-delete { background: #dc3545; }
 
-.status-tag {
-  padding: 2px 8px;
-  border-radius: 8px;
+.method-tag {
   color: #fff;
-  font-size: 12px;
-  font-weight: bold;
-}
-.status-2 { background: #28a745; }
-.status-4 { background: #ffc107; color: #222; }
-.status-5 { background: #dc3545; }
-
-.api-table caption {
-  caption-side: top;
-  font-weight: bold;
-  font-size: 16px;
-  margin-bottom: 8px;
+  margin-right: 4px;
 }
 
-/* Loading message styling */
-=======
-.error-message {
-  color: red;
+.method-get {
+  background: #28a745;
 }
-/* Optional: Status indicators or labels (for future enhancement) */
+.method-post {
+  background: #007bff;
+}
+.method-put {
+  background: #ffc107;
+  color: #222;
+}
+.method-delete {
+  background: #dc3545;
+}
+
 .status-tag {
-  display: inline-block;
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: 12px;
-  color: white;
-  background-color: #007bff;
-  margin-left: 10px;
+  color: #fff;
 }
 
-.status-tag.success {
-  background-color: #28a745;
+.status-2 {
+  background: #28a745;
+}
+.status-4 {
+  background: #ffc107;
+  color: #222;
+}
+.status-5 {
+  background: #dc3545;
 }
 
-.status-tag.error {
-  background-color: #dc3545;
-}
-
-/* Optional: Loading spinner or message styling */
->>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
-.loading-message {
-  font-style: italic;
-  color: #555;
-  margin-top: 10px;
-}
-
-<<<<<<< HEAD
-/* Section dividers for reports */
-=======
-/* Optional: Section dividers for reports */
->>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
-.report-block {
-  margin-bottom: 30px;
-}
-
-.report-block h3 {
-  margin-bottom: 10px;
-  font-size: 18px;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 5px;
-}
-
-<<<<<<< HEAD
-/* Highlighted metric */
-=======
-/* Optional: Highlighted metric */
->>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
-.highlight-metric {
-  font-weight: bold;
-  color: #2c3e50;
-}
-<<<<<<< HEAD
-
+/* Tooltip styles */
 .tooltip {
   position: relative;
-  cursor: pointer;
   display: inline-block;
+  cursor: help;
 }
+
 .tooltip .tooltiptext {
   visibility: hidden;
-  width: 220px;
+  width: 200px;
   background-color: #333;
   color: #fff;
-  text-align: left;
+  text-align: center;
   border-radius: 6px;
   padding: 8px;
   position: absolute;
   z-index: 1;
-  left: 110%;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
   opacity: 0;
-  transition: opacity 0.2s;
-  font-size: 13px;
+  transition: opacity 0.3s;
+  font-size: 14px;
+  font-weight: normal;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
 }
-=======
->>>>>>> c16b17ae12bc7f753f5b62ad4cae7737d7ad0184
+
+/* Loading message */
+.loading-message {
+  font-style: italic;
+  color: #666;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Report blocks */
+.report-block {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.report-block h3 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Highlight metrics */
+.highlight-metric {
+  font-weight: 600;
+  color: #2c3e50;
+  background: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.api-table-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(25, 118, 210, 0.07);
+  background: #fff;
+}
+
+.modern-table thead th {
+  position: sticky;
+  top: 0;
+  background: #e3f0fa;
+  z-index: 2;
+}
+
+/* Alerts Container */
+.alerts-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Alerts Summary */
+.alerts-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.alerts-summary-item {
+  flex: 1;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.alerts-summary-count {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.alerts-summary-label {
+  font-size: 16px;
+  color: #555;
+}
+
+/* Alerts Section */
+.alerts-section {
+  margin-bottom: 32px;
+}
+
+.alerts-section-title {
+  font-size: 20px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Alert Card */
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.alert-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.alert-header {
+  display: flex;
+  padding: 16px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.alert-icon {
+  font-size: 24px;
+  margin-right: 16px;
+}
+
+.alert-title {
+  flex: 1;
+}
+
+.alert-title h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.alert-category {
+  font-size: 14px;
+  color: #666;
+}
+
+.alert-expand {
+  color: #888;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.alert-details {
+  padding: 0 16px 16px 56px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.alert-metric,
+.alert-values,
+.alert-recommendation {
+  margin-bottom: 8px;
+}
+
+.alert-value,
+.alert-threshold {
+  margin-right: 16px;
+}
+
+.alert-specific-details {
+  margin-top: 8px;
+}
+
+.alert-specific-details ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+}
+
+.alert-specific-details li {
+  margin-bottom: 4px;
+}
+
+/* Empty State */
+.alerts-empty {
+  text-align: center;
+  padding: 48px 0;
+}
+
+.alerts-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #28a745;
+}
+
+.alerts-empty h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+}
+
+.alerts-empty p {
+  color: #666;
+  max-width: 400px;
+  margin: 0 auto;
+}

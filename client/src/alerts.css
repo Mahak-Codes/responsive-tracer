@@ -1,0 +1,146 @@
+/* Alerts Container */
+.alerts-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Alerts Summary */
+.alerts-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.alerts-summary-item {
+  flex: 1;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.alerts-summary-count {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.alerts-summary-label {
+  font-size: 16px;
+  color: #555;
+}
+
+/* Alerts Section */
+.alerts-section {
+  margin-bottom: 32px;
+}
+
+.alerts-section-title {
+  font-size: 20px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Alert Card */
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.alert-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.alert-header {
+  display: flex;
+  padding: 16px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.alert-icon {
+  font-size: 24px;
+  margin-right: 16px;
+}
+
+.alert-title {
+  flex: 1;
+}
+
+.alert-title h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.alert-category {
+  font-size: 14px;
+  color: #666;
+}
+
+.alert-expand {
+  color: #888;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.alert-details {
+  padding: 0 16px 16px 56px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.alert-metric,
+.alert-values,
+.alert-recommendation {
+  margin-bottom: 8px;
+}
+
+.alert-value,
+.alert-threshold {
+  margin-right: 16px;
+}
+
+.alert-specific-details {
+  margin-top: 8px;
+}
+
+.alert-specific-details ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+}
+
+.alert-specific-details li {
+  margin-bottom: 4px;
+}
+
+/* Empty State */
+.alerts-empty {
+  text-align: center;
+  padding: 48px 0;
+}
+
+.alerts-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #28a745;
+}
+
+.alerts-empty h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+}
+
+.alerts-empty p {
+  color: #666;
+  max-width: 400px;
+  margin: 0 auto;
+}

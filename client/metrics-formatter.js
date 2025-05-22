@@ -129,11 +129,20 @@ Consider implementing:
 • API response time tracking
   `.trim()
 
+  // Format alerts view (will be populated by lighthouse-service.js)
+  const alertsView = `
+Automatic Performance Alerts:
+
+Note: Performance alerts will be generated based on the analysis results.
+Check the 'alerts' property in the response for detailed alerts.
+  `.trim()
+
   return {
     overall: overallView,
     frontend: frontendView,
     api: apiView,
     db: dbView,
+    alerts: alertsView
   }
 }
 
