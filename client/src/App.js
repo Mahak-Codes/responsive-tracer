@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import "./App.css"
-import { formatApiTableToHtml } from "./api-formatter"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import AlertsView from "./alerts-view"
 
@@ -180,57 +179,126 @@ function ScoreCircle({ score, label }) {
 
 function App() {
   const [url, setUrl] = useState("")
+  const [maxPages, setMaxPages] = useState(10)
   const [activePage, setActivePage] = useState("overall")
   const [status, setStatus] = useState("Idle")
   const [reportData, setReportData] = useState(null)
-  const [formattedApiTable, setFormattedApiTable] = useState("")
   const [error, setError] = useState(null)
   const [rawResponse, setRawResponse] = useState(null)
+  const [analyzeMode, setAnalyzeMode] = useState("page") // "page" or "website"
+  const [webpageCache, setWebpageCache] = useState(null);
+  const [websiteCache, setWebsiteCache] = useState(null);
 
-  const analyzeFrontend = async (url, scenario) => {
-    const response = await fetch("http://localhost:5000/api/analyze-frontend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, scenario }),
-    })
+  // Helper to trigger analysis when mode changes and url is present
+  const handleScopeChange = async (e) => {
+    const newMode = e.target.value
+    setAnalyzeMode(newMode)
 
-    if (!response.ok) {
-      throw new Error("Analysis failed. Please check the backend or the URL.")
+    // Check cache
+    if (newMode === "page" && webpageCache && webpageCache.url === url) {
+      setRawResponse(webpageCache.rawResponse);
+      setReportData(webpageCache.reportData);
+      setStatus("Analysis complete!");
+      setError(null);
+      return;
+    }
+    if (newMode === "website" && websiteCache && websiteCache.url === url && websiteCache.maxPages === maxPages) {
+      setRawResponse(websiteCache.rawResponse);
+      setReportData(websiteCache.reportData);
+      setStatus("Analysis complete!");
+      setError(null);
+      return;
     }
 
-    const data = await response.json()
-
-    // Store the raw response for debugging
-    setRawResponse(data)
-
-    console.log("Backend response:", data)
-    console.log("API data available:", data.api ? "Yes" : "No")
-    console.log("Alerts available:", data.alerts ? "Yes" : "No")
-
-    // Format API table if available
-    if (data.api && data.api.includes("API Endpoint\tMethod\tStatus")) {
-      // Extract just the table part from the API data
-      const apiTableText = data.api.split("\n\n")[1]
-      const formattedTable = formatApiTableToHtml(apiTableText)
-      setFormattedApiTable(formattedTable)
-
-      // Replace the table text with a placeholder that we'll swap out in the render
-      const apiDataWithoutTable = data.api.replace(apiTableText, "[[API_TABLE_PLACEHOLDER]]")
-      data.api = apiDataWithoutTable
+    // Otherwise, trigger new analysis if URL is present
+    if (url) {
+      setStatus("Analyzing...")
+      setError(null)
+      setReportData(null)
+      setRawResponse(null)
+      try {
+        const scenario = activePage === "overall" ? "overall" : activePage
+        const data = await analyzeFrontend(url, scenario, newMode)
+        setStatus("Analysis complete!")
+        setReportData(data)
+        // Store in cache
+        if (newMode === "page") {
+          setWebpageCache({ url, rawResponse, reportData: data })
+        } else {
+          setWebsiteCache({ url, maxPages, rawResponse, reportData: data })
+        }
+      } catch (e) {
+        setStatus("Idle")
+        setError(e.message)
+      }
     }
+  }
 
-    // Use the formatted data from the backend
-    return {
-      overall:
-        data.overall ||
-        `Performance Score: ${(data.performance * 100).toFixed(0)}\nFCP: ${data.fcp}\nLCP: ${data.lcp}\nCLS: ${data.cls}\nTTI: ${data.tti}`,
-      api: data.api || "API metrics are available in backend and API tabs.",
-      db: data.db || "DB metrics are available in backend and DB tabs.",
-      alerts: data.alertsFormatted || "Alert metrics are available in alert tab.",
-      frontend:
-        data.frontend ||
-        `After button click:\nFCP: ${data.fcp}\nLCP: ${data.lcp}\nCLS: ${data.cls}\nTTI: ${data.tti}\n\n` +
-          `After search:\nFCP: ${data.fcp}\nLCP: ${data.lcp}\nCLS: ${data.cls}\nTTI: ${data.tti}`,
+  const analyzeFrontend = async (url, scenario, modeOverride) => {
+    const mode = modeOverride || analyzeMode
+    if (mode === "website") {
+      const response = await fetch("http://localhost:5000/api/analyze-website", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, maxPages }),
+      })
+      if (!response.ok) {
+        throw new Error("Analysis failed. Please check the backend or the URL.")
+      }
+      const data = await response.json()
+      setRawResponse(data)
+      return {
+        overall: `Analyzed ${data.apiResults.pagesAnalyzed} pages and found ${data.apiResults.totalApiCalls} API calls`,
+        api: "See API tab for detailed API analysis across the website",
+        db: "DB metrics are available in backend and DB tabs.",
+        alerts: "Alert metrics are available in alert tab.",
+        frontend: data.frontendMetrics
+          ? `Performance: ${data.frontendMetrics.performance}\nAccessibility: ${data.frontendMetrics.accessibility}\nBest Practices: ${data.frontendMetrics.bestPractices}\nSEO: ${data.frontendMetrics.seo}`
+          : "Frontend metrics are only available for single page analysis.",
+      }
+    } else {
+      // Original single page analysis
+      const response = await fetch("http://localhost:5000/api/analyze-frontend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, scenario }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Analysis failed. Please check the backend or the URL.")
+      }
+
+      const data = await response.json()
+
+      // Store the raw response for debugging
+      setRawResponse(data)
+
+      console.log("Backend response:", data)
+      console.log("API data available:", data.api ? "Yes" : "No")
+      console.log("Alerts available:", data.alerts ? "Yes" : "No")
+
+      // Format API table if available
+      if (data.api && data.api.includes("API Endpoint\tMethod\tStatus")) {
+        // Extract just the table part from the API data
+        const apiTableText = data.api.split("\n\n")[1]
+        // Replace the table text with a placeholder that we'll swap out in the render
+        const apiDataWithoutTable = data.api.replace(apiTableText, "[[API_TABLE_PLACEHOLDER]]")
+        data.api = apiDataWithoutTable
+      }
+
+      // Use the formatted data from the backend
+      return {
+        overall:
+          data.overall ||
+          `Performance Score: ${(data.performance * 100).toFixed(0)}\nFCP: ${data.fcp}\nLCP: ${data.lcp}\nCLS: ${data.cls}\nTTI: ${data.tti}`,
+        api: data.api || "API metrics are available in backend and API tabs.",
+        db: data.db || "DB metrics are available in backend and DB tabs.",
+        alerts: data.alertsFormatted || "Alert metrics are available in alert tab.",
+        frontend:
+          data.frontend ||
+          `After button click:\nFCP: ${data.fcp}\nLCP: ${data.lcp}\nCLS: ${data.cls}\nTTI: ${data.tti}\n\n` +
+            `After search:\nFCP: ${data.fcp}\nLCP: ${data.lcp}\nCLS: ${data.cls}\nTTI: ${data.tti}`,
+      }
     }
   }
 
@@ -239,13 +307,18 @@ function App() {
     setError(null)
     setReportData(null)
     setRawResponse(null)
-    setFormattedApiTable("")
 
     try {
       const scenario = activePage === "overall" ? "overall" : activePage
       const data = await analyzeFrontend(url, scenario)
       setStatus("Analysis complete!")
       setReportData(data)
+      // Store in cache
+      if (analyzeMode === "page") {
+        setWebpageCache({ url, rawResponse, reportData: data })
+      } else {
+        setWebsiteCache({ url, maxPages, rawResponse, reportData: data })
+      }
     } catch (e) {
       setStatus("Idle")
       setError(e.message)
@@ -262,6 +335,7 @@ function App() {
     ) {
       return <div>No API results available</div>
     }
+
     // Map/compute avg and max response times if not present
     return (
       <div
@@ -275,13 +349,18 @@ function App() {
         }}
       >
         <table className="modern-table">
-          <caption>API Response Times</caption>
+          <caption>
+            {analyzeMode === "website"
+              ? `API Response Times (Across ${apiResults.pagesAnalyzed} Pages)`
+              : "API Response Times"}
+          </caption>
           <thead>
             <tr>
               <th>Endpoint</th>
               <th>Method</th>
               <th>Avg Response Time</th>
               <th>Max Taken</th>
+              {analyzeMode === "website" && <th>Call Count</th>}
               <th>Status</th>
             </tr>
           </thead>
@@ -313,6 +392,7 @@ function App() {
                   <td>{row.method || "-"}</td>
                   <td>{avg + " ms"}</td>
                   <td>{max + " ms"}</td>
+                  {analyzeMode === "website" && <td>{row.callCount || 1}</td>}
                   <td>{statusIcon}</td>
                 </tr>
               )
@@ -338,8 +418,12 @@ function App() {
     }
 
     if (status === "Analysis complete!" && reportData) {
-      if (activePage === "api" && rawResponse && rawResponse.apiResults) {
-        return <ApiResultsTable apiResults={rawResponse.apiResults} />
+      if (activePage === "api" && rawResponse) {
+        if (analyzeMode === "website" && rawResponse.apiResults) {
+          return <ApiResultsTable apiResults={rawResponse.apiResults} />
+        } else if (rawResponse.apiResults) {
+          return <ApiResultsTable apiResults={rawResponse.apiResults} />
+        }
       }
 
       if (activePage === "alerts" && rawResponse && rawResponse.alerts) {
@@ -347,7 +431,7 @@ function App() {
       }
 
       // Only show reportData for non-frontend tabs
-      if (activePage !== "frontend") {
+      if (activePage !== "frontend" || analyzeMode === "website") {
         return <pre className="report-data">{reportData[activePage]}</pre>
       }
     }
@@ -355,11 +439,34 @@ function App() {
     return null
   }
 
+  // Add handler for analyzing the whole website
+  const handleAnalyzeWholeWebsite = async () => {
+    if (!url) {
+      setError("Please enter a URL to analyze the whole website.");
+      return;
+    }
+    setAnalyzeMode("website");
+    setStatus("Analyzing...");
+    setError(null);
+    setReportData(null);
+    setRawResponse(null);
+    try {
+      const scenario = activePage === "overall" ? "overall" : activePage;
+      const data = await analyzeFrontend(url, scenario, "website");
+      setStatus("Analysis complete!");
+      setReportData(data);
+      setWebsiteCache({ url, maxPages, rawResponse, reportData: data });
+    } catch (e) {
+      setStatus("Idle");
+      setError(e.message);
+    }
+  };
+
   return (
     <div className="app-container">
       <aside className="sidebar">
         <h2>Performance Reports</h2>
-        {sidebarItems.map(({ id, label }) => (
+        {analyzeMode === "page" && sidebarItems.map(({ id, label }) => (
           <div
             key={id}
             onClick={() => setActivePage(id)}
@@ -372,20 +479,79 @@ function App() {
 
       <main className="main-content">
         <h1>Responsive Tracer</h1>
-        <div className="input-group">
-          <input
-            type="text"
-            placeholder="Enter website URL"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="url-input"
-          />
-          <button onClick={handleAnalyze} className="analyze-button" disabled={!url || status === "Analyzing..."}>
-            {status === "Analyzing..." ? "Analyzing..." : "Analyze"}
-          </button>
-        </div>
+        {/* Only show URL input and analyze button in Overall tab and not in API tab */}
+        {activePage === "overall" && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32, width: '100%' }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 20,
+              width: '100%',
+              maxWidth: 600,
+              margin: '0 auto',
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 2px 12px rgba(25, 118, 210, 0.07)',
+              padding: 24,
+            }}>
+              <input
+                type="text"
+                placeholder="Enter website URL"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="url-input"
+                style={{
+                  flex: 1,
+                  fontSize: 18,
+                  padding: '16px 18px',
+                  borderRadius: 8,
+                  border: '1.5px solid #1976d2',
+                  marginRight: 0,
+                  background: '#f8fbff',
+                  boxShadow: '0 1px 4px rgba(25, 118, 210, 0.04)',
+                }}
+              />
+              <button
+                onClick={handleAnalyze}
+                className="analyze-button"
+                style={{
+                  fontSize: 18,
+                  padding: '16px 32px',
+                  borderRadius: 8,
+                  background: '#1976d2',
+                  color: '#fff',
+                  fontWeight: 700,
+                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.08)',
+                  border: 'none',
+                  cursor: !url || status === "Analyzing..." ? 'not-allowed' : 'pointer',
+                  opacity: !url || status === "Analyzing..." ? 0.7 : 1,
+                  transition: 'background 0.2s',
+                }}
+                disabled={!url || status === "Analyzing..."}
+              >
+                {status === "Analyzing..." ? "Analyzing..." : "Analyze"}
+              </button>
+            </div>
+          </div>
+        )}
 
-        {activePage === "overall" ? (
+        {/* In API tab, show Analyze Whole Website button in top right corner */}
+        {activePage === "api" && (
+          <div style={{ width: '100%', maxWidth: 900, display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+            <button
+              className="analyze-button"
+              style={{ fontSize: 16, padding: '12px 28px', borderRadius: 8, background: '#1976d2', color: '#fff', fontWeight: 700, boxShadow: '0 2px 8px rgba(25, 118, 210, 0.08)', border: 'none', cursor: !url || status === "Analyzing..." ? 'not-allowed' : 'pointer', opacity: !url || status === "Analyzing..." ? 0.7 : 1, transition: 'background 0.2s' }}
+              onClick={handleAnalyzeWholeWebsite}
+              disabled={!url || status === "Analyzing..."}
+            >
+              {status === "Analyzing..." ? "Analyzing..." : "Analyze Whole Website"}
+            </button>
+          </div>
+        )}
+
+        {activePage === "overall" && analyzeMode !== "website" ? (
           <div
             style={{
               background: "#fff",
@@ -516,7 +682,7 @@ function App() {
               </div>
             )}
           </div>
-        ) : activePage === "frontend" ? (
+        ) : activePage === "frontend" && analyzeMode !== "website" ? (
           <div
             style={{
               background: "#fff",
@@ -610,23 +776,31 @@ function App() {
             }}
           >
             <h2 style={{ marginTop: 0, marginBottom: 24, fontWeight: 700, color: "#1976d2", letterSpacing: 0.5 }}>
-              API Calls
+              API Calls {analyzeMode === "website" ? "(Entire Website)" : "(Single Page)"}
             </h2>
-            {rawResponse && rawResponse.apiResults ? (
+            {rawResponse && (analyzeMode === "website" ? rawResponse.apiResults : rawResponse.apiResults) ? (
               <div className="api-table-scroll">
                 <table className="modern-table">
-                  <caption>API Response Times</caption>
+                  <caption>
+                    {analyzeMode === "website"
+                      ? `API Response Times (Across ${rawResponse.apiResults.pagesAnalyzed || 0} Pages)`
+                      : "API Response Times"}
+                  </caption>
                   <thead>
                     <tr>
                       <th>Endpoint</th>
                       <th>Method</th>
                       <th>Avg Response Time</th>
                       <th>Max Taken</th>
+                      {analyzeMode === "website" && <th>Call Count</th>}
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {rawResponse.apiResults.apiCalls.map((row, idx) => {
+                    {(analyzeMode === "website"
+                      ? rawResponse.apiResults.apiCalls
+                      : rawResponse.apiResults.apiCalls
+                    ).map((row, idx) => {
                       let statusIcon = <span className="status-icon ok">✔️</span>
                       if (row.status >= 500) statusIcon = <span className="status-icon error">❌</span>
                       else if (row.status >= 400) statusIcon = <span className="status-icon warn">⚠️</span>
@@ -638,6 +812,7 @@ function App() {
                           <td>{row.method || "-"}</td>
                           <td>{avg !== undefined ? avg + " ms" : "-"}</td>
                           <td>{max !== undefined ? max + " ms" : "-"}</td>
+                          {analyzeMode === "website" && <td>{row.callCount || 1}</td>}
                           <td>{statusIcon}</td>
                         </tr>
                       )
