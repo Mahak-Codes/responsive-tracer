@@ -4,6 +4,8 @@ import { useState } from "react"
 import "./App.css"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import AlertsView from "./alerts-view"
+import SessionSimulator from "./components/SessionSimulator"
+import PerformanceAnalyzer from "./components/PerformanceAnalyzer"
 
 const sidebarItems = [
   { id: "overall", label: "Overall Performance" },
@@ -11,6 +13,7 @@ const sidebarItems = [
   { id: "api", label: "API Calls" },
   { id: "db", label: "DB Latency" },
   { id: "alerts", label: "Automatic Alerts" },
+  { id: "sessions", label: "Session Analysis" },
 ]
 
 const coreWebVitals = [
@@ -188,6 +191,8 @@ function App() {
   const [analyzeMode, setAnalyzeMode] = useState("page") // "page" or "website"
   const [webpageCache, setWebpageCache] = useState(null);
   const [websiteCache, setWebsiteCache] = useState(null);
+  const [currentSession, setCurrentSession] = useState(null);
+  const [sessionHistory, setSessionHistory] = useState([]);
 
   // Helper to trigger analysis when mode changes and url is present
   const handleScopeChange = async (e) => {
@@ -460,6 +465,12 @@ function App() {
       setStatus("Idle");
       setError(e.message);
     }
+  };
+
+  // Add handler for session completion
+  const handleSessionComplete = (session) => {
+    setCurrentSession(session);
+    setSessionHistory(prev => [...prev, session]);
   };
 
   return (
@@ -848,6 +859,31 @@ function App() {
                 <h3>No Alerts Available</h3>
                 <p>Enter a URL and click Analyze to generate performance alerts.</p>
               </div>
+            )}
+          </div>
+        ) : activePage === "sessions" ? (
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 16,
+              boxShadow: "0 4px 24px rgba(0,0,0,0.10)",
+              padding: 40,
+              maxWidth: 900,
+              margin: "32px auto 0 auto",
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: 24, fontWeight: 700, color: "#1976d2", letterSpacing: 0.5 }}>
+              Session Analysis & Performance Monitoring
+            </h2>
+            
+            <SessionSimulator onSessionComplete={handleSessionComplete} />
+            
+            {currentSession && (
+              <PerformanceAnalyzer
+                sessionData={currentSession}
+                apiMetrics={rawResponse?.apiResults?.apiCalls}
+                frontendMetrics={rawResponse}
+              />
             )}
           </div>
         ) : (
