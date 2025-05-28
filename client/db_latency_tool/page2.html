@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test Page 2</title></head>
+<body>
+  <h1>Another API Trigger</h1>
+  <button onclick="call()">Fetch Products</button>
+  <button onclick="window.location.href='index.html'">Go to Index</button>
+  <button onclick="window.location.href='page3.html'">Go to Page 3</button>
+  <script>
+    function call() {
+      fetch("http://localhost:5000/api/fetch-products")
+        .then(res => res.json())
+        .then(data => console.log(data));
+    }
+  </script>
+</body>
+</html>

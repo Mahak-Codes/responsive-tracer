@@ -52,7 +52,6 @@ const uxInteractionMetrics = (rawResponse) => {
   if (rawResponse) {
     console.log("UX Metrics raw values:", {
       responsiveness: rawResponse.responsiveness,
-      touchTargetSize: rawResponse.touchTargetSize,
       accessibility: rawResponse.accessibility,
       mobileFriendliness: rawResponse.mobileFriendliness,
     })
@@ -64,12 +63,6 @@ const uxInteractionMetrics = (rawResponse) => {
       label: "Responsiveness",
       desc: "How quickly UI responds to user input.",
       value: rawResponse?.responsiveness ? getStatusLabel(rawResponse.responsiveness) : "Unknown",
-    },
-    {
-      key: "touchTargetSize",
-      label: "Touch target size",
-      desc: "Are buttons/links usable on mobile devices?",
-      value: rawResponse?.touchTargetSize ? getStatusLabel(rawResponse.touchTargetSize) : "Unknown",
     },
     {
       key: "a11y",

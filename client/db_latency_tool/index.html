@@ -1,0 +1,18 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head><title>DB Test</title></head>
+<body>
+  <h1>Trace Test</h1>
+  <button onclick="fetchUsers()">Fetch Users</button>
+<button onclick="window.location.href='page2.html'">Go to Page 2</button>
+
+  <script>
+    function fetchUsers() {
+      fetch("http://localhost:5000/api/fetch-users")
+        .then(res => res.json())
+        .then(data => console.log("Fetched:", data));
+    }
+  </script>
+</body>
+</html>
