@@ -4,7 +4,7 @@ import React from "react"
 
 // Helper function to get alert type color
 const getAlertTypeColor = (type) => {
-  switch (type) {
+  switch (type.toLowerCase()) {
     case "critical":
       return "#dc3545" // red
     case "warning":
@@ -16,7 +16,7 @@ const getAlertTypeColor = (type) => {
 
 // Helper function to get category icon
 const getCategoryIcon = (category) => {
-  switch (category.toLowerCase()) {
+  switch (category?.toLowerCase()) {
     case "core web vitals":
       return "📊"
     case "performance":
@@ -42,34 +42,41 @@ const AlertCard = ({ alert }) => {
 
   return (
     <div className="alert-card" style={{ borderLeft: `4px solid ${getAlertTypeColor(alert.type)}` }}>
-      <div className="alert-header">
+      <div className="alert-header" onClick={() => setExpanded(!expanded)}>
         <div className="alert-icon">{getCategoryIcon(alert.category)}</div>
         <div className="alert-title">
           <h3>{alert.message}</h3>
-          <span className="alert-category">{alert.category}</span>
+          <span className="alert-category">{alert.category || 'General'}</span>
         </div>
-        <div className="alert-expand" onClick={() => setExpanded(!expanded)}>
+        <div className="alert-expand">
           {expanded ? "▲" : "▼"}
         </div>
       </div>
 
       {expanded && (
         <div className="alert-details">
-          <div className="alert-metric">
-            <strong>Metric:</strong> {alert.metric}
-          </div>
-          <div className="alert-values">
-            <span className="alert-value">
-              <strong>Value:</strong> {alert.value}
-            </span>
-            <span className="alert-threshold">
-              <strong>Threshold:</strong> {alert.threshold}
-            </span>
-          </div>
-          <div className="alert-recommendation">
-            <strong>Recommendation:</strong> {alert.recommendation}
-          </div>
-
+          {alert.metric && (
+            <div className="alert-metric">
+              <strong>Metric:</strong> {alert.metric}
+            </div>
+          )}
+          {alert.value && (
+            <div className="alert-values">
+              <span className="alert-value">
+                <strong>Value:</strong> {alert.value}
+              </span>
+              {alert.threshold && (
+                <span className="alert-threshold">
+                  <strong>Threshold:</strong> {alert.threshold}
+                </span>
+              )}
+            </div>
+          )}
+          {alert.recommendation && (
+            <div className="alert-recommendation">
+              <strong>Recommendation:</strong> {alert.recommendation}
+            </div>
+          )}
           {alert.details && alert.details.length > 0 && (
             <div className="alert-specific-details">
               <strong>Details:</strong>
@@ -99,8 +106,8 @@ const AlertsView = ({ alerts }) => {
   }
 
   // Group alerts by type
-  const criticalAlerts = alerts.filter((alert) => alert.type === "critical")
-  const warningAlerts = alerts.filter((alert) => alert.type === "warning")
+  const criticalAlerts = alerts.filter((alert) => alert.type?.toLowerCase() === "critical")
+  const warningAlerts = alerts.filter((alert) => alert.type?.toLowerCase() === "warning")
 
   return (
     <div className="alerts-container">

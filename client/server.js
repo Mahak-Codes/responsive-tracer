@@ -1,221 +1,249 @@
-const express = require("express")
-const cors = require("cors")
-const { URL } = require("url")
-const dns = require("dns")
-const { promisify } = require("util")
-const dnsLookup = promisify(dns.lookup)
-const { analyzeSite } = require("./lighthouse-service")
-const { analyzeWebsiteAlternative } = require("./website-analyzer-alternative")
+const express = require("express");
+const cors = require("cors");
+const { URL } = require("url");
+const { analyzeSite } = require("./lighthouse-service");
+const { WebsiteCrawler } = require("./website-crawler");
+const { ApiPerformanceCorrelator } = require("./api-performance-correlator");
 
-// Add error handling for uncaught exceptions
-process.on("uncaughtException", (error) => {
-  console.error("Uncaught Exception:", error)
-  process.exit(1)
-})
-
-process.on("unhandledRejection", (error) => {
-  console.error("Unhandled Rejection:", error)
-  process.exit(1)
-})
-
-const app = express()
-const PORT = process.env.PORT || 5000
+const app = express();
+const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
-// Add request logging middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`)
-  next()
-})
-
-// Routes
-app.post("/api/analyze-frontend", async (req, res) => {
-  try {
-    const { url, scenario } = req.body
-
-    if (!url) {
-      console.log("Error: URL is required")
-      return res.status(400).json({ error: "URL is required" })
-    }
-
-    console.log(`Analyzing ${url} for scenario: ${scenario || "overall"}`)
-
-    const results = await analyzeSite(url, scenario)
-
-    // Log what we're sending back
-    console.log("API Results included:", results.apiResults ? "Yes" : "No")
-    console.log("API View content length:", results.api ? results.api.length : 0)
-
-    return res.json(results)
-  } catch (error) {
-    console.error("Error analyzing site:", error)
-    return res.status(500).json({
-      error: "Failed to analyze the website",
-      message: error.message,
-    })
-  }
-})
-
-// New endpoint for website analysis using alternative approach
-app.post("/api/analyze-website", async (req, res) => {
-  try {
-    const { url, maxPages } = req.body
-
-    if (!url) {
-      console.log("Error: URL is required")
-      return res.status(400).json({ error: "URL is required" })
-    }
-
-    // Validate URL format
+// Enhanced complete website analysis endpoint
+app.post("/api/analyze-complete-website", async (req, res) => {
     try {
-      new URL(url)
-    } catch (urlError) {
-      return res.status(400).json({ error: "Invalid URL format" })
-    }
+        const { url, options = {} } = req.body;
+        
+        if (!url) {
+            return res.status(400).json({ error: "URL is required" });
+        }
+        
+        // Validate URL format
+        try {
+            new URL(url);
+        } catch (urlError) {
+            return res.status(400).json({ error: "Invalid URL format" });
+        }
+        
+        console.log(`Starting complete website analysis for ${url}`);
+        
+        // Set analysis options
+        const analysisOptions = {
+            maxPages: Math.min(options.maxPages || 15, 50),
+            maxDepth: Math.min(options.maxDepth || 3, 5)
+        };
+        
+        // Phase 1: Crawl website and discover API calls
+        console.log('Phase 1: Crawling website and discovering API calls...');
+        const crawler = new WebsiteCrawler(analysisOptions);
+        const crawlResults = await crawler.crawlWebsite(url);
+        
+        // Phase 2: Correlate API calls with frontend metrics
+        console.log('Phase 2: Analyzing API impact on frontend metrics...');
+        const correlator = new ApiPerformanceCorrelator();
+        const enhancedApiCalls = await correlator.analyzeApiImpact(crawlResults.apiCalls, url);
+        
+        // Phase 3: Run Lighthouse analysis on key pages
+        console.log('Phase 3: Running Lighthouse analysis...');
+        const lighthouseResults = [];
+        const keyPages = Array.from(crawlResults.visitedUrls).slice(0, 5);
+        
+        for (const pageUrl of keyPages) {
+            try {
+                const result = await analyzeSite(pageUrl, 'overall');
+                lighthouseResults.push({
+                    url: pageUrl,
+                    ...result
+                });
+            } catch (error) {
+                console.error(`Lighthouse analysis failed for ${pageUrl}: ${error.message}`);
+            }
+        }
+        
+        // Phase 4: Aggregate and analyze results (FIXED: removed 'this.')
+        const analysis = generateWebsiteAnalysis(crawlResults, enhancedApiCalls, lighthouseResults);
+        
+        // Extract scores from lighthouseResults
+let performance = 0, accessibility = 0, bestPractices = 0, seo = 0;
+if (lighthouseResults.length > 0) {
+  // Average the scores across analyzed pages
+  performance = Math.round(
+    lighthouseResults.reduce((sum, r) => sum + (r.performance || 0), 0) / lighthouseResults.length * 100
+  );
+  accessibility = Math.round(
+    lighthouseResults.reduce((sum, r) => sum + (r.accessibility || 0), 0) / lighthouseResults.length * 100
+  );
+  bestPractices = Math.round(
+    lighthouseResults.reduce((sum, r) => sum + (r.bestPractices || 0), 0) / lighthouseResults.length * 100
+  );
+  seo = Math.round(
+    lighthouseResults.reduce((sum, r) => sum + (r.seo || 0), 0) / lighthouseResults.length * 100
+  );
+}
 
-    // Validate maxPages
-    const pages = Math.min(Math.max(Number.parseInt(maxPages) || 10, 1), 20)
-
-    console.log(`Starting website analysis for ${url} with max ${pages} pages`)
-
-    const results = await analyzeWebsiteAlternative(url, pages)
-
-    console.log("Website analysis complete:", {
-      pagesAnalyzed: results.apiResults?.pagesAnalyzed || 0,
-      totalApiCalls: results.apiResults?.totalApiCalls || 0,
-      alertsGenerated: results.alerts?.length || 0,
-    })
-
-    return res.json(results)
-  } catch (error) {
-    console.error("Error analyzing website:", error)
-    return res.status(500).json({
-      error: "Failed to analyze the website",
-      message: error.message,
-    })
-  }
-})
-
-// NEW: Dynamic API Analysis endpoint
-app.post("/api/dynamic-analyze", async (req, res) => {
-  try {
-    const { url, interactions = [] } = req.body
-
-    if (!url) {
-      console.log("Error: URL is required")
-      return res.status(400).json({ error: "URL is required" })
-    }
-
-    console.log(`Starting dynamic API analysis for ${url}`)
-
-    // Simulate dynamic analysis with realistic data
-    const simulateApiCall = (endpoint, method, trigger) => {
-      const responseTime = Math.floor(Math.random() * 800) + 50
-      const status = Math.random() > 0.1 ? 200 : Math.random() > 0.5 ? 404 : 500
-
-      return {
-        id: Math.random().toString(36).substr(2, 9),
-        endpoint,
-        method,
-        status,
-        responseTime,
-        payloadSize: Math.floor(Math.random() * 50000) + 1000,
-        trigger,
-        frontendMetrics: {
-          domUpdateTime: Math.floor(Math.random() * 100) + 10,
-          renderTime: Math.floor(Math.random() * 200) + 20,
-          layoutShift: Math.random() * 0.5,
-          interactionDelay: Math.floor(Math.random() * 50) + 5,
-        },
-        timestamp: Date.now(),
-      }
-    }
-
-    // Simulate dynamic interactions and API calls
-    const apiCalls = []
-    const dynamicInteractions = [
-      { endpoint: "/api/auth/login", method: "POST", trigger: "Login Form" },
-      { endpoint: "/api/user/profile", method: "GET", trigger: "Page Load" },
-      { endpoint: "/api/products", method: "GET", trigger: "Product List" },
-      { endpoint: "/api/search", method: "POST", trigger: "Search Input" },
-      { endpoint: "/api/cart/add", method: "POST", trigger: "Add to Cart" },
-      { endpoint: "/api/analytics", method: "POST", trigger: "Page View" },
-      { endpoint: "/api/recommendations", method: "GET", trigger: "Scroll Event" },
-      { endpoint: "/api/user/preferences", method: "PUT", trigger: "Settings Update" },
-    ]
-
-    // Generate API calls based on interactions
-    for (const interaction of dynamicInteractions) {
-      const apiCall = simulateApiCall(interaction.endpoint, interaction.method, interaction.trigger)
-      apiCalls.push(apiCall)
-    }
-
-    // Calculate overall metrics
-    const totalResponseTime = apiCalls.reduce((sum, call) => sum + call.responseTime, 0)
-    const errorCalls = apiCalls.filter((call) => call.status >= 400)
-    const slowestCall = apiCalls.reduce((prev, current) =>
-      prev.responseTime > current.responseTime ? prev : current,
+const results = {
+  performance,
+  accessibility,
+  bestPractices,
+  seo,
+  summary: {
+    totalPagesAnalyzed: crawlResults.totalPages,
+    totalApiCallsFound: crawlResults.totalApiCalls,
+    averageApiResponseTime: calculateAverageResponseTime(enhancedApiCalls),
+    pagesWithSlowApis: countPagesWithSlowApis(enhancedApiCalls),
+    criticalIssuesFound: analysis.criticalIssues?.length || 0
+  },
+  websiteStructure: {
+    visitedUrls: crawlResults.visitedUrls,
+    pageData: crawlResults.pageData,
+    totalPages: crawlResults.totalPages,
+    maxDepthReached: crawlResults.maxDepthReached
+  },
+  apiAnalysis: {
+    totalApiCalls: crawlResults.totalApiCalls,
+    apiCalls: enhancedApiCalls,
+    slowestApis: enhancedApiCalls.filter(call => call.duration > 1000),
+    errorApis: enhancedApiCalls.filter(call => call.status >= 400),
+    highImpactApis: enhancedApiCalls.filter(call =>
+      call.frontendImpact?.renderingImpact === 'high'
     )
-    const fastestCall = apiCalls.reduce((prev, current) =>
-      prev.responseTime < current.responseTime ? prev : current,
-    )
+  },
+  lighthouseResults,
+  performanceInsights: analysis
+};
 
-    const overallMetrics = {
-      totalRenderTime: apiCalls.reduce((sum, call) => sum + call.frontendMetrics.renderTime, 0),
-      totalLayoutShifts: apiCalls.reduce((sum, call) => sum + call.frontendMetrics.layoutShift, 0),
-      averageInteractionDelay:
-        apiCalls.reduce((sum, call) => sum + call.frontendMetrics.interactionDelay, 0) / apiCalls.length,
+        
+        console.log(`Complete website analysis finished: ${results.summary.totalPagesAnalyzed} pages, ${results.summary.totalApiCallsFound} API calls`);
+        
+        return res.json({
+            success: true,
+            data: results,
+            analysisCompleted: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error("Complete website analysis failed:", error);
+        return res.status(500).json({
+            error: "Failed to analyze complete website",
+            message: error.message
+        });
     }
+});
 
-    const results = {
-      totalApiCalls: apiCalls.length,
-      averageResponseTime: Math.round(totalResponseTime / apiCalls.length),
-      slowestCall,
-      fastestCall,
-      errorRate: (errorCalls.length / apiCalls.length) * 100,
-      apiCalls,
-      overallMetrics,
+// Keep existing endpoints
+app.post("/api/analyze-frontend", async (req, res) => {
+    try {
+        const { url, scenario } = req.body;
+        
+        if (!url) {
+            return res.status(400).json({ error: "URL is required" });
+        }
+        
+        console.log(`Analyzing ${url} for scenario: ${scenario || "overall"}`);
+        const results = await analyzeSite(url, scenario);
+        
+        return res.json(results);
+        
+    } catch (error) {
+        console.error("Error analyzing site:", error);
+        return res.status(500).json({
+            error: "Failed to analyze the website",
+            message: error.message
+        });
     }
+});
 
-    console.log(`Dynamic analysis complete: ${results.totalApiCalls} API calls found`)
+// Helper functions (FIXED: These are now standalone functions, not methods)
+function calculateAverageResponseTime(apiCalls) {
+    if (!apiCalls || apiCalls.length === 0) return 0;
+    const total = apiCalls.reduce((sum, call) => sum + (call.duration || 0), 0);
+    return Math.round(total / apiCalls.length);
+}
 
-    return res.json(results)
-  } catch (error) {
-    console.error("Error in dynamic analysis:", error)
-    return res.status(500).json({
-      error: "Failed to perform dynamic analysis",
-      message: error.message,
-    })
-  }
-})
+function countPagesWithSlowApis(apiCalls) {
+    if (!apiCalls || apiCalls.length === 0) return 0;
+    const slowApiCalls = apiCalls.filter(call => call.duration > 1000);
+    const pagesWithSlowApis = new Set(slowApiCalls.map(call => call.page));
+    return pagesWithSlowApis.size;
+}
+
+function generateWebsiteAnalysis(crawlResults, apiCalls, lighthouseResults) {
+    const criticalIssues = [];
+    const recommendations = [];
+    
+    // Analyze API performance across the website
+    const slowApis = apiCalls.filter(call => call.duration > 1000);
+    if (slowApis.length > 0) {
+        criticalIssues.push({
+            type: 'api_performance',
+            severity: 'high',
+            message: `${slowApis.length} slow API calls detected across the website`,
+            affectedApis: slowApis.map(api => api.url)
+        });
+        
+        recommendations.push({
+            type: 'api_optimization',
+            priority: 'high',
+            message: 'Optimize slow API endpoints or implement caching strategies'
+        });
+    }
+    
+    // Analyze frontend impact
+    const highImpactApis = apiCalls.filter(call => 
+        call.frontendImpact?.renderingImpact === 'high'
+    );
+    
+    if (highImpactApis.length > 0) {
+        criticalIssues.push({
+            type: 'frontend_impact',
+            severity: 'medium',
+            message: `${highImpactApis.length} API calls significantly impact frontend performance`,
+            affectedApis: highImpactApis.map(api => api.url)
+        });
+    }
+    
+    return {
+        criticalIssues,
+        recommendations,
+        overallScore: calculateOverallScore(crawlResults, apiCalls, lighthouseResults)
+    };
+}
+
+function calculateOverallScore(crawlResults, apiCalls, lighthouseResults) {
+    // Simple scoring algorithm
+    let score = 100;
+    
+    // Deduct points for slow APIs
+    const slowApis = apiCalls.filter(call => call.duration > 1000);
+    score -= slowApis.length * 5;
+    
+    // Deduct points for error APIs
+    const errorApis = apiCalls.filter(call => call.status >= 400);
+    score -= errorApis.length * 10;
+    
+    // Consider Lighthouse scores
+    if (lighthouseResults.length > 0) {
+        const avgPerformanceScore = lighthouseResults.reduce((sum, result) => 
+            sum + (result.performance || 0), 0) / lighthouseResults.length;
+        score = Math.min(score, avgPerformanceScore * 100);
+    }
+    
+    return Math.max(0, Math.round(score));
+}
 
 // Health check endpoint
 app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok" })
-})
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("Server error:", err)
-  res.status(500).json({
-    error: "Internal server error",
-    message: err.message,
-  })
-})
+    res.status(200).json({ status: "ok" });
+});
 
 // Start server
-try {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
-    console.log(`Health check available at http://localhost:${PORT}/health`)
-    console.log(`Frontend analysis: POST /api/analyze-frontend`)
-    console.log(`Website analysis: POST /api/analyze-website`)
-    console.log(`Dynamic analysis: POST /api/dynamic-analyze`) // New endpoint
-  })
-} catch (error) {
-  console.error("Failed to start server:", error)
-  process.exit(1)
-}
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Complete website analysis: POST /api/analyze-complete-website`);
+    console.log(`Frontend analysis: POST /api/analyze-frontend`);
+});
+
+module.exports = app;
