@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  tracer-app:
+    build:
+      context: ./responsive-tracer-main/client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - sample-db
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./responsive-tracer-main/client:/usr/src/app
+
+  sample-db-app:
+    build:
+      context: ./responsive-tracer-main/responsive-tracer-main/client/sample-db-app
+    ports:
+      - "4000:4000"
+    depends_on:
+      - sample-db
+    environment:
+      - DB_HOST=sample-db
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=sampledb
+    volumes:
+      - ./responsive-tracer-main/responsive-tracer-main/client/sample-db-app:/usr/src/app
+
+  sample-db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sampledb
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
