@@ -4,17 +4,11 @@ const { formatMetricsForDisplay } = require("./metrics-formatter")
 const { analyzeApiCalls } = require("./api-analyzer")
 const { generatePerformanceAlerts, formatAlertsForDisplay } = require("./performance-alerts")
 
-/**
- * Runs Lighthouse analysis on a given URL
- * @param {string} url - The URL to analyze
- * @param {string} scenario - The analysis scenario ('overall' | 'api' | 'basic')
- * @returns {Object} - Formatted performance metrics and optional API analysis
- */
+
 async function analyzeSite(url, scenario = "overall") {
   let chrome = null
 
   try {
-    // Launch headless Chrome
     chrome = await chromeLauncher.launch({
       chromeFlags: ["--headless", "--disable-gpu", "--no-sandbox"],
     })
@@ -45,7 +39,6 @@ async function analyzeSite(url, scenario = "overall") {
       tbt: formatMetric(audits["total-blocking-time"]),
       tti: formatMetric(audits["interactive"]),
       si: formatMetric(audits["speed-index"]),
-      // Fix responsiveness and touch target metrics
       responsiveness: audits["max-potential-fid"]
         ? audits["max-potential-fid"].score
         : audits["total-blocking-time"]
@@ -67,7 +60,6 @@ async function analyzeSite(url, scenario = "overall") {
     console.log("Touch target size metric:", metrics.touchTargetSize)
     console.log("Mobile friendliness metric:", metrics.mobileFriendliness)
 
-    // Optional API analysis
     let apiResults = null
     if (scenario === "api" || scenario === "overall") {
       console.log("Analyzing API calls...")
@@ -75,12 +67,10 @@ async function analyzeSite(url, scenario = "overall") {
       console.log("API analysis complete:", apiResults ? "Success" : "Failed")
     }
 
-    // Generate performance alerts
     const alerts = generatePerformanceAlerts(metrics, apiResults)
     const formattedAlerts = formatAlertsForDisplay(alerts)
     console.log(`Generated ${alerts.length} performance alerts`)
 
-    // Add debug logging
     console.log("Formatting metrics with apiResults:", apiResults ? "Present" : "Not present")
 
     const formattedMetrics = formatMetricsForDisplay(metrics, apiResults)
@@ -102,11 +92,7 @@ async function analyzeSite(url, scenario = "overall") {
   }
 }
 
-/**
- * Formats a Lighthouse audit metric
- * @param {Object} audit - Lighthouse audit object
- * @returns {string} - Human-readable value or fallback
- */
+
 function formatMetric(audit) {
   if (!audit) return "N/A"
   return audit.displayValue || "N/A"

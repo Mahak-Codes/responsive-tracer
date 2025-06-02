@@ -5,9 +5,8 @@ import './alerts.css';
 import SessionSimulator from './SessionSimulator';
 import DbLatency from './DbLatency';
 
-// Donut Chart Component
 function DonutChart({ value = 0, label, color }) {
-  // value: 0-100
+ 
   const radius = 38;
   const stroke = 8;
   const normalizedRadius = radius - stroke / 2;
@@ -77,67 +76,47 @@ function App() {
         throw new Error(`Analysis failed: ${response.status}`);
       }
       const result = await response.json();
-      if (result.success) {
-        setRawResponse(result.data);
-        // Generate alerts from the analysis results
-        const newAlerts = [];
+      setRawResponse(result.data);
 
-        // Add performance alerts if any
-        if (
-          result.data.performanceInsights?.criticalIssues &&
-          result.data.performanceInsights.criticalIssues.length > 0
-        ) {
-          result.data.performanceInsights.criticalIssues.forEach(issue => {
-            if (
-              (issue.metric && issue.metric !== 'N/A') ||
-              (issue.value && issue.value !== 'N/A') ||
-              (issue.threshold && issue.threshold !== 'N/A')
-            ) {
-              newAlerts.push({
-                type: 'critical',
-                category: 'Performance',
-                message: issue.message,
-                metric: issue.metric,
-                value: issue.value,
-                threshold: issue.threshold,
-                recommendation: issue.recommendation,
-                details: issue.details || []
-              });
-            }
-          });
-        }
-
-        // Add API alerts if any
-        if (
-          result.data.apiAnalysis?.slowestApis &&
-          result.data.apiAnalysis.slowestApis.length > 0
-        ) {
-          result.data.apiAnalysis.slowestApis.forEach(api => {
-            if (api.endpoint && api.avgResponseTime !== undefined && api.avgResponseTime !== null) {
-              newAlerts.push({
-                type: 'warning',
-                category: 'API Performance',
-                message: `Slow API endpoint: ${api.endpoint}`,
-                metric: 'Response Time',
-                value: `${api.avgResponseTime}ms`,
-                threshold: '1000ms',
-                recommendation: 'Consider optimizing the API endpoint or implementing caching',
-                details: [`Average response time: ${api.avgResponseTime}ms`]
-              });
-            }
-          });
-        }
-
-        // Only set alerts if there are any
-        setAlerts(newAlerts);
-
-        setStatus("Complete website analysis finished!");
-        setActivePage("overview");
-      } else {
-        throw new Error(result.message || "Analysis failed");
+      // Only generate alerts from frontend metrics (lighthouseResults)
+      const newAlerts = [];
+      if (result.data.lighthouseResults && Array.isArray(result.data.lighthouseResults)) {
+        result.data.lighthouseResults.forEach(page => {
+          if (page.lcp && parseFloat(page.lcp) > 4) {
+            newAlerts.push({
+              type: 'critical',
+              category: 'Core Web Vitals',
+              message: `LCP is slow on ${page.url}`,
+              metric: 'Largest Contentful Paint (LCP)',
+              value: page.lcp,
+              threshold: '4s',
+              recommendation: 'Optimize images and critical content for faster LCP',
+              details: [`LCP for ${page.url}: ${page.lcp}`]
+            });
+          }
+          if (page.fcp && parseFloat(page.fcp) > 2) {
+            newAlerts.push({
+              type: 'warning',
+              category: 'Core Web Vitals',
+              message: `FCP is slow on ${page.url}`,
+              metric: 'First Contentful Paint (FCP)',
+              value: page.fcp,
+              threshold: '2s',
+              recommendation: 'Reduce render-blocking resources for faster FCP',
+              details: [`FCP for ${page.url}: ${page.fcp}`]
+            });
+          }
+          // Add more metrics as needed
+        });
       }
+
+      setAlerts(newAlerts);
+
+      setStatus("Complete website analysis finished!");
+      setActivePage("overview");
     } catch (error) {
       setStatus(`Analysis failed: ${error.message}`);
+      setAlerts([]);
     } finally {
       setLoading(false);
     }
@@ -147,10 +126,8 @@ function App() {
     if (!session || !session.metrics) return;
 
     setSessionData(session);
-    // Generate alerts based on session data
     const newAlerts = [];
     
-    // Check for high resource usage
     const highCpuUsage = session.metrics.filter(m => parseFloat(m.cpu) > 80);
     const highMemoryUsage = session.metrics.filter(m => parseFloat(m.memory) > 80);
     
@@ -180,17 +157,15 @@ function App() {
       });
     }
     
-    setAlerts(prevAlerts => [...prevAlerts, ...newAlerts]);
+    setAlerts(newAlerts);
   };
 
   function getScore(val) {
     if (val === undefined || val === null) return 0;
-    // If value is between 0 and 1, multiply by 100
     if (typeof val === "number" && val <= 1) return Math.round(val * 100);
     return Math.round(val);
   }
 
-  // --- OVERVIEW TAB ---
   const renderOverview = () => {
     if (!rawResponse) {
       return <div>No analysis data available. Please run an analysis.</div>;
@@ -308,11 +283,28 @@ function App() {
             ))}
           </div>
         )}
+        {alerts.length > 0 && (
+          <div className="analysis-section critical-issues">
+            <h3>Frontend Metric Issues Found</h3>
+            {alerts.map((alert, index) => (
+              <div key={index} className="issue-item">
+                <div className={`issue-severity ${alert.type}`}>{alert.type.toUpperCase()}</div>
+                <div className="issue-content">
+                  <strong>{alert.message}</strong>
+                  <div>
+                    <small>
+                      Metric: {alert.metric} | Value: {alert.value} | Threshold: {alert.threshold}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
-  // --- API CALLS TAB ---
   const renderApiCalls = () => {
     if (!rawResponse?.apiAnalysis?.apiCalls) {
       return <div>No API calls data available.</div>;
@@ -365,8 +357,6 @@ function App() {
     );
   };
 
-  // --- FRONTEND METRICS TAB ---
- 
   const renderFrontendMetrics = () => {
     if (!rawResponse?.lighthouseResults) {
       return <div>No frontend metrics available.</div>;
@@ -405,7 +395,6 @@ function App() {
     );
   };
 
-  // --- MAIN RENDER ---
   return (
     <div className="app-container">
       {/* Sidebar */}
@@ -424,10 +413,8 @@ function App() {
         <div className={`sidebar-item ${activePage === "session" ? "active" : ""}`}
           onClick={() => setActivePage("session")}>Session Analysis</div>
       </div>
-      {/* Main Content */}
       <div className="main-content">
         <h1>Responsive Tracer</h1>
-        {/* Input Section */}
         {activePage === "overview" && (
           <div className="input-group">
             <input
@@ -461,7 +448,6 @@ function App() {
             </button>
           </div>
         )}
-        {/* Status */}
         <div className="status-section">
           <p className={status.includes("failed") ? "error-message" : ""}>{status}</p>
         </div>

@@ -38,6 +38,8 @@ async function example() {
   console.log("End");
 }
 
+let recentLatencies = [];
+
 // Query wrapper with logging
 async function executeQuery(query, params = []) {
   const startTime = Date.now();
@@ -46,6 +48,8 @@ async function executeQuery(query, params = []) {
     const [result] = await pool.execute(query, params);
     const endTime = Date.now();
     const duration = endTime - startTime;
+    recentLatencies.push(duration);
+    if (recentLatencies.length > 100) recentLatencies.shift();
     
     logger.info({
       timestamp: new Date().toISOString(),
@@ -119,7 +123,10 @@ async function initializeDatabase() {
 app.get('/api/products', async (req, res) => {
   try {
     const result = await executeQuery('SELECT * FROM products');
-    res.json(result.rows);
+    res.json({
+      products: result.rows,
+      dbLatency: result.queryStats.duration
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -224,6 +231,16 @@ app.get('/api/query-logs', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+app.get('/api/db-latency', (req, res) => {
+  const avg = recentLatencies.length
+    ? recentLatencies.reduce((a, b) => a + b, 0) / recentLatencies.length
+    : 0;
+  res.json({
+    average: avg,
+    recent: recentLatencies.slice(-10)
+  });
 });
 
 const PORT = process.env.PORT || 3000;

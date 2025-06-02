@@ -142,3 +142,28 @@
   margin: 0;
   color: #666;
 }
+
+.issue-severity {
+  display: inline-block;
+  min-width: 70px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #fff;
+  margin-bottom: 8px;
+  margin-right: 12px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.issue-severity.critical,
+.issue-severity.CRITICAL {
+  background: #dc3545;
+}
+
+.issue-severity.warning,
+.issue-severity.WARNING {
+  background: #ffc107;
+  color: #222;
+}

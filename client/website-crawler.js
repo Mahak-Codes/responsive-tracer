@@ -1,9 +1,7 @@
 const puppeteer = require("puppeteer");
 const { URL } = require("url");
 
-/**
- * Enhanced website crawler with proper link discovery
- */
+
 class WebsiteCrawler {
     constructor(options = {}) {
         this.maxPages = options.maxPages || 20;
@@ -36,12 +34,10 @@ class WebsiteCrawler {
                 const page = await browser.newPage();
                 
                 try {
-                    // Enable request interception to capture API calls
                     await page.setRequestInterception(true);
                     
                     const apiCallsForPage = [];
                     
-                    // Capture API requests
                     page.on('request', request => {
                         const isApiCall = this.isApiRequest(request.url(), request.resourceType());
                         
@@ -64,7 +60,6 @@ class WebsiteCrawler {
                         request.continue();
                     });
 
-                    // Capture response details
                     page.on('response', async response => {
                         const request = response.request();
                         const isApiCall = this.isApiRequest(request.url(), request.resourceType());
@@ -85,13 +80,11 @@ class WebsiteCrawler {
                         }
                     });
 
-                    // Navigate to page
                     await page.goto(currentUrl, {
                         waitUntil: ['networkidle0', 'domcontentloaded'],
                         timeout: 30000
                     });
 
-                    // Extract links and page metadata
                     const pageInfo = await page.evaluate((baseUrl) => {
                         const anchorElements = Array.from(document.querySelectorAll('a[href]'));
                         const baseHost = new URL(baseUrl).host;
@@ -128,7 +121,6 @@ class WebsiteCrawler {
                         };
                     }, baseUrl);
 
-                    // Store page data
                     this.pageData.set(currentUrl, {
                         ...pageInfo,
                         linkCount: pageInfo.links.length,
@@ -137,10 +129,8 @@ class WebsiteCrawler {
                         apiCalls: apiCallsForPage.length
                     });
 
-                    // Add API calls to main collection
                     this.apiCalls.push(...apiCallsForPage);
 
-                    // Add new links to crawl queue
                     pageInfo.links.forEach(link => {
                         if (!this.visitedUrls.has(link.url) && !this.discoveredUrls.has(link.url)) {
                             this.discoveredUrls.add(link.url);
@@ -152,7 +142,6 @@ class WebsiteCrawler {
                         }
                     });
 
-                    // Simulate user interactions to trigger more API calls
                     await this.simulateUserInteractions(page);
                     
                 } catch (error) {
@@ -176,20 +165,17 @@ class WebsiteCrawler {
 
     async simulateUserInteractions(page) {
         try {
-            // Scroll to trigger lazy loading
             await page.evaluate(() => {
                 window.scrollTo(0, document.body.scrollHeight / 2);
             });
             await page.waitForTimeout(1000);
             
-            // Click on interactive elements
             const clickableElements = await page.$$('button, [role="button"], .btn');
             for (let i = 0; i < Math.min(clickableElements.length, 3); i++) {
                 try {
                     await clickableElements[i].click();
                     await page.waitForTimeout(500);
                 } catch (e) {
-                    // Element might not be clickable
                 }
             }
             

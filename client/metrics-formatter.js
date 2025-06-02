@@ -1,19 +1,12 @@
-/**
- * Formats performance metrics for frontend display
- * @param {Object} lighthouseResults - Raw Lighthouse results
- * @param {Object} apiResults - API call analysis results
- * @returns {Object} - Formatted metrics for different views
- */
+
 function formatMetricsForDisplay(lighthouseResults, apiResults = null) {
   const { performance, fcp, lcp, cls, tbt, tti, si, details } = lighthouseResults
 
-  // Add debug logging
   console.log("formatMetricsForDisplay called with apiResults:", apiResults ? "Present" : "Not present")
   if (apiResults) {
     console.log(`API calls: ${apiResults.apiCalls.length}, Analysis: ${Object.keys(apiResults.analysis).join(", ")}`)
   }
 
-  // Format overall performance view
   const overallView = `
 Performance Score: ${(performance * 100).toFixed(0)}/100
 
@@ -39,7 +32,6 @@ API Performance Summary:
 }
   `.trim()
 
-  // Format frontend metrics view
   const frontendView = `
 Core Web Vitals:
 • First Contentful Paint (FCP): ${fcp}
@@ -74,7 +66,6 @@ Core Web Vitals:
   - When HTML is fully parsed
   `.trim()
 
-  // Format API calls view
   const apiView = apiResults
     ? `
 API Calls Analysis:
@@ -116,7 +107,6 @@ Consider implementing:
 • Network request timing analysis
   `.trim()
 
-  // Format DB latency view (placeholder for now)
   const dbView = `
 Database Latency Analysis:
 
@@ -129,7 +119,6 @@ Consider implementing:
 • API response time tracking
   `.trim()
 
-  // Format alerts view (will be populated by lighthouse-service.js)
   const alertsView = `
 Automatic Performance Alerts:
 
@@ -146,11 +135,6 @@ Check the 'alerts' property in the response for detailed alerts.
   }
 }
 
-/**
- * Formats API calls into a table-like string
- * @param {Array} apiCalls - Array of API call objects
- * @returns {string} - Formatted table string
- */
 function formatApiTable(apiCalls) {
   if (!apiCalls || apiCalls.length === 0) {
     return "No API calls detected."

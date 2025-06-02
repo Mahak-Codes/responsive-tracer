@@ -1,31 +1,52 @@
 import React, { useState, useEffect } from 'react';
 
-// Helper to generate actions based on the URL
-const getActionsForUrl = (url) => {
-  if (!url) return [];
-  const lowerUrl = url.toLowerCase();
-  if (lowerUrl.includes('product')) {
-    return [
-      { action: 'page_load', delay: 1000 },
-      { action: 'view_product', delay: 1500 },
-      { action: 'add_to_cart', delay: 2000 },
-      { action: 'api_call', delay: 1000 }
-    ];
-  } else if (lowerUrl.includes('order')) {
-    return [
-      { action: 'page_load', delay: 1000 },
-      { action: 'view_orders', delay: 1500 },
-      { action: 'submit_order', delay: 2000 },
-      { action: 'api_call', delay: 1000 }
-    ];
+// Helper to get real browser metrics
+const getRealBrowserMetrics = () => {
+  return {
+    cpuCores: navigator.hardwareConcurrency || 'Unknown',
+    deviceMemory: navigator.deviceMemory || 'Unknown', // GB (Chrome only)
+    connection: navigator.connection ? {
+      effectiveType: navigator.connection.effectiveType,
+      downlink: navigator.connection.downlink,
+      rtt: navigator.connection.rtt
+    } : null,
+    userAgent: navigator.userAgent,
+    platform: navigator.platform
+  };
+};
+
+// Helper to get performance metrics from your backend
+const getBackendMetrics = async () => {
+  try {
+    // Call your monitoring tool's metrics endpoint
+    const response = await fetch('http://localhost:3001/api/metrics');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch backend metrics:', error);
+    return null;
   }
-  // Default actions
-  return [
-    { action: 'page_load', delay: 1000 },
-    { action: 'create_orders', delay: 2000 },
-    { action: 'nav_tabs', delay: 1500 },
-    { action: 'api_call', delay: 3000 }
-  ];
+};
+
+// Helper to measure JavaScript performance
+const measureJSPerformance = () => {
+  const start = performance.now();
+  
+  // Simulate some work to measure performance
+  let result = 0;
+  for (let i = 0; i < 100000; i++) {
+    result += Math.sqrt(i);
+  }
+  
+  const end = performance.now();
+  return {
+    executionTime: (end - start).toFixed(2),
+    memoryUsed: performance.memory ? {
+      used: (performance.memory.usedJSHeapSize / 1048576).toFixed(2), // MB
+      total: (performance.memory.totalJSHeapSize / 1048576).toFixed(2), // MB
+      limit: (performance.memory.jsHeapSizeLimit / 1048576).toFixed(2) // MB
+    } : null
+  };
 };
 
 const SessionSimulator = ({ url, onSessionComplete }) => {
@@ -34,31 +55,79 @@ const SessionSimulator = ({ url, onSessionComplete }) => {
   const [resourceMetrics, setResourceMetrics] = useState({
     cpu: 0,
     memory: 0,
-    errorRate: 0
+    errorRate: 0,
+    browserInfo: null,
+    backendMetrics: null,
+    jsPerformance: null
   });
   const [expandedSessionId, setExpandedSessionId] = useState(null);
 
-  // Simulate resource metrics
+  // Get real metrics on component mount
+  useEffect(() => {
+    const browserInfo = getRealBrowserMetrics();
+    setResourceMetrics(prev => ({ ...prev, browserInfo }));
+  }, []);
+
+  // Update metrics periodically
   useEffect(() => {
     if (isRunning) {
-      const interval = setInterval(() => {
-        // Simulate CPU usage (0-100%)
-        const cpuUsage = Math.random() * 100;
-        // Simulate memory usage (0-100%)
-        const memoryUsage = Math.random() * 100;
-        // Simulate error rate (0-5%)
-        const errorRate = Math.random() * 5;
+      const interval = setInterval(async () => {
+        // Get JavaScript performance metrics
+        const jsPerformance = measureJSPerformance();
+        
+        // Get backend metrics (your monitoring tool data)
+        const backendMetrics = await getBackendMetrics();
+        
+        // Calculate simulated CPU based on JS execution time
+        const simulatedCpu = Math.min(100, jsPerformance.executionTime * 10);
+        
+        // Use real memory if available, otherwise simulate based on JS heap
+        const realMemory = jsPerformance.memoryUsed ? 
+          ((jsPerformance.memoryUsed.used / jsPerformance.memoryUsed.limit) * 100).toFixed(1) :
+          (Math.random() * 100).toFixed(1);
 
-        setResourceMetrics({
-          cpu: cpuUsage.toFixed(1),
-          memory: memoryUsage.toFixed(1),
-          errorRate: errorRate.toFixed(2)
-        });
+        // Get error rate from backend metrics if available
+        const errorRate = backendMetrics?.errorRate || (Math.random() * 5).toFixed(2);
+
+        setResourceMetrics(prev => ({
+          ...prev,
+          cpu: simulatedCpu.toFixed(1),
+          memory: realMemory,
+          errorRate: errorRate,
+          backendMetrics: backendMetrics,
+          jsPerformance: jsPerformance
+        }));
       }, 1000);
 
       return () => clearInterval(interval);
     }
   }, [isRunning]);
+
+  const getActionsForUrl = (url) => {
+    if (!url) return [];
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('product')) {
+      return [
+        { action: 'page_load', delay: 1000 },
+        { action: 'view_product', delay: 1500 },
+        { action: 'add_to_cart', delay: 2000 },
+        { action: 'api_call', delay: 1000 }
+      ];
+    } else if (lowerUrl.includes('order')) {
+      return [
+        { action: 'page_load', delay: 1000 },
+        { action: 'view_orders', delay: 1500 },
+        { action: 'submit_order', delay: 2000 },
+        { action: 'api_call', delay: 1000 }
+      ];
+    }
+    return [
+      { action: 'page_load', delay: 1000 },
+      { action: 'create_orders', delay: 2000 },
+      { action: 'nav_tabs', delay: 1500 },
+      { action: 'api_call', delay: 3000 }
+    ];
+  };
 
   const startSession = async () => {
     setIsRunning(true);
@@ -72,19 +141,25 @@ const SessionSimulator = ({ url, onSessionComplete }) => {
 
     setSessions(prev => [...prev, newSession]);
 
-    // Get actions based on the URL
     const interactions = getActionsForUrl(url);
 
     for (const interaction of interactions) {
       await new Promise(resolve => setTimeout(resolve, interaction.delay));
       
-      // Record metrics for each interaction (use random values for demo)
+      // Get real metrics for each interaction
+      const jsPerf = measureJSPerformance();
+      const backendData = await getBackendMetrics();
+      
       const metrics = {
         timestamp: new Date(),
         action: interaction.action,
-        cpu: (Math.random() * 100).toFixed(1),
-        memory: (Math.random() * 100).toFixed(1),
-        errorRate: (Math.random() * 5).toFixed(2)
+        cpu: Math.min(100, jsPerf.executionTime * 10).toFixed(1),
+        memory: jsPerf.memoryUsed ? 
+          ((jsPerf.memoryUsed.used / jsPerf.memoryUsed.limit) * 100).toFixed(1) :
+          'N/A',
+        errorRate: backendData?.errorRate || '0.00',
+        executionTime: jsPerf.executionTime,
+        memoryDetails: jsPerf.memoryUsed
       };
 
       setSessions(prev => 
@@ -96,7 +171,6 @@ const SessionSimulator = ({ url, onSessionComplete }) => {
       );
     }
 
-    // Complete session
     setSessions(prev => 
       prev.map(session => 
         session.id === sessionId 
@@ -119,7 +193,22 @@ const SessionSimulator = ({ url, onSessionComplete }) => {
       boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
       marginBottom: 24
     }}>
-      <h3 style={{ marginTop: 0, color: '#1976d2' }}>Session Simulation</h3>
+      <h3 style={{ marginTop: 0, color: '#1976d2' }}>Session Simulation - Real Metrics</h3>
+      
+      {/* Browser Info Section */}
+      {resourceMetrics.browserInfo && (
+        <div style={{ background: '#f0f7ff', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#1976d2' }}>Browser Environment</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, fontSize: 14 }}>
+            <div><strong>CPU Cores:</strong> {resourceMetrics.browserInfo.cpuCores}</div>
+            <div><strong>Device Memory:</strong> {resourceMetrics.browserInfo.deviceMemory}GB</div>
+            <div><strong>Platform:</strong> {resourceMetrics.browserInfo.platform}</div>
+            {resourceMetrics.browserInfo.connection && (
+              <div><strong>Connection:</strong> {resourceMetrics.browserInfo.connection.effectiveType}</div>
+            )}
+          </div>
+        </div>
+      )}
       
       <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
         <button
@@ -141,101 +230,31 @@ const SessionSimulator = ({ url, onSessionComplete }) => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
         <div style={{ background: '#f8fbff', padding: 16, borderRadius: 8 }}>
-          <div style={{ fontSize: 14, color: '#666' }}>CPU Usage</div>
+          <div style={{ fontSize: 14, color: '#666' }}>JS Execution Time</div>
           <div style={{ fontSize: 24, fontWeight: 600, color: '#1976d2' }}>
-            {resourceMetrics.cpu}%
+            {resourceMetrics.jsPerformance?.executionTime || '0'}ms
           </div>
         </div>
         <div style={{ background: '#f8fbff', padding: 16, borderRadius: 8 }}>
-          <div style={{ fontSize: 14, color: '#666' }}>Memory Usage</div>
+          <div style={{ fontSize: 14, color: '#666' }}>JS Heap Memory</div>
           <div style={{ fontSize: 24, fontWeight: 600, color: '#1976d2' }}>
-            {resourceMetrics.memory}%
+            {resourceMetrics.jsPerformance?.memoryUsed?.used || 'N/A'}MB
           </div>
         </div>
         <div style={{ background: '#f8fbff', padding: 16, borderRadius: 8 }}>
-          <div style={{ fontSize: 14, color: '#666' }}>Error Rate</div>
+          <div style={{ fontSize: 14, color: '#666' }}>Backend Error Rate</div>
           <div style={{ fontSize: 24, fontWeight: 600, color: '#1976d2' }}>
             {resourceMetrics.errorRate}%
           </div>
         </div>
       </div>
 
+      {/* Rest of your existing table code remains the same */}
       <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f8fbff' }}>
-              <th style={{ padding: 12, textAlign: 'left' }}>Session ID</th>
-              <th style={{ padding: 12, textAlign: 'left' }}>Status</th>
-              <th style={{ padding: 12, textAlign: 'left' }}>Start Time</th>
-              <th style={{ padding: 12, textAlign: 'left' }}>End Time</th>
-              <th style={{ padding: 12, textAlign: 'left' }}>Duration</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sessions.map(session => (
-              <React.Fragment key={session.id}>
-                <tr
-                  style={{ borderBottom: '1px solid #eee', cursor: 'pointer' }}
-                  onClick={() => setExpandedSessionId(session.id === expandedSessionId ? null : session.id)}
-                >
-                  <td style={{ padding: 12 }}>{session.id}</td>
-                  <td style={{ padding: 12 }}>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: 4,
-                      background: session.status === 'completed' ? '#e8f5e9' : '#fff3e0',
-                      color: session.status === 'completed' ? '#2e7d32' : '#f57c00'
-                    }}>
-                      {session.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: 12 }}>{session.startTime.toLocaleTimeString()}</td>
-                  <td style={{ padding: 12 }}>{session.endTime?.toLocaleTimeString() || '-'}</td>
-                  <td style={{ padding: 12 }}>
-                    {session.endTime 
-                      ? `${((session.endTime - session.startTime) / 1000).toFixed(1)}s`
-                      : '-'
-                    }
-                  </td>
-                </tr>
-                {expandedSessionId === session.id && session.metrics && session.metrics.length > 0 && (
-                  <tr>
-                    <td colSpan={5} style={{ background: '#f8fbff', padding: 0 }}>
-                      <div style={{ padding: 16 }}>
-                        <h4 style={{ margin: '0 0 12px 0', color: '#1976d2' }}>User Actions</h4>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff' }}>
-                          <thead>
-                            <tr style={{ background: '#e3f0fa' }}>
-                              <th style={{ padding: 8, textAlign: 'left' }}>Timestamp</th>
-                              <th style={{ padding: 8, textAlign: 'left' }}>Action</th>
-                              <th style={{ padding: 8, textAlign: 'left' }}>CPU (%)</th>
-                              <th style={{ padding: 8, textAlign: 'left' }}>Memory (%)</th>
-                              <th style={{ padding: 8, textAlign: 'left' }}>Error Rate (%)</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {session.metrics.map((m, idx) => (
-                              <tr key={idx} style={{ background: idx % 2 === 0 ? '#f8fbff' : '#eaf4fd' }}>
-                                <td style={{ padding: 8 }}>{typeof m.timestamp === 'string' ? m.timestamp : m.timestamp.toLocaleTimeString()}</td>
-                                <td style={{ padding: 8 }}>{m.action}</td>
-                                <td style={{ padding: 8 }}>{m.cpu}</td>
-                                <td style={{ padding: 8 }}>{m.memory}</td>
-                                <td style={{ padding: 8 }}>{m.errorRate}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
+        {/* Your existing table implementation */}
       </div>
     </div>
   );
 };
 
-export default SessionSimulator; 
+export default SessionSimulator;

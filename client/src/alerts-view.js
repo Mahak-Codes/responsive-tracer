@@ -2,7 +2,6 @@
 
 import React from "react"
 
-// Helper function to get alert type color
 const getAlertTypeColor = (type) => {
   switch (type.toLowerCase()) {
     case "critical":
@@ -14,7 +13,6 @@ const getAlertTypeColor = (type) => {
   }
 }
 
-// Helper function to get category icon
 const getCategoryIcon = (category) => {
   switch (category?.toLowerCase()) {
     case "core web vitals":
@@ -36,7 +34,6 @@ const getCategoryIcon = (category) => {
   }
 }
 
-// Alert Card Component
 const AlertCard = ({ alert }) => {
   const [expanded, setExpanded] = React.useState(false)
 
@@ -93,7 +90,6 @@ const AlertCard = ({ alert }) => {
   )
 }
 
-// Main Alerts View Component
 const AlertsView = ({ alerts }) => {
   if (!alerts || alerts.length === 0) {
     return (
@@ -105,7 +101,6 @@ const AlertsView = ({ alerts }) => {
     )
   }
 
-  // Group alerts by type
   const criticalAlerts = alerts.filter((alert) => alert.type?.toLowerCase() === "critical")
   const warningAlerts = alerts.filter((alert) => alert.type?.toLowerCase() === "warning")
 
